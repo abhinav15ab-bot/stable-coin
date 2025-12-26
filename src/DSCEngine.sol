@@ -155,9 +155,13 @@ contract DSCEngine is ReentrancyGuard {
     }
 
     function _healthFactor(address user) private view returns (uint256) {
-        (uint256 totalDscMinted, uint256 collateralValueInUsd) = _getAccountInformation(user);
-        uint256 collateralAdjustedForThreshold = (collateralValueInUsd * LIQUIDATION_THRESHOLD) / LIQUIDATION_PRECISION;
-        return ((collateralAdjustedForThreshold * PRECISION) / totalDscMinted); //(150/100)
+    (uint256 totalDscMinted, uint256 collateralValueInUsd) = _getAccountInformation(user);
+    // If the user hasn't minted any DSC, their health factor is infinite / very large (cannot be liquidated)
+    if (totalDscMinted == 0) {
+        return type(uint256).max;
+    }
+    uint256 collateralAdjustedForThreshold = (collateralValueInUsd * LIQUIDATION_THRESHOLD) / LIQUIDATION_PRECISION;
+    return ((collateralAdjustedForThreshold * PRECISION) / totalDscMinted);
     }
 
     function _revertIfHealthFactorIsBroken(address user) internal view {
